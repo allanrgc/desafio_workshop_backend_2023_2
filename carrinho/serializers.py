@@ -12,11 +12,15 @@ class ProdutoSerializer(serializers.ModelSerializer):
 class ItensSerializer(serializers.ModelSerializer):
     nome = serializers.CharField(source='produto.nome', read_only=True)
     valor = serializers.DecimalField(source='produto.valor', max_digits=10, decimal_places=2, read_only=True)
+    quantidade = serializers.IntegerField(source='produto.quantidade', read_only=True)
+    total = serializers.FloatField(source='produto.total', read_only=True)
     class Meta:
         model = Itens
-        fields = ['nome', 'valor', 'quantidade', 'total']
+        # fields = ['nome', 'valor', 'quantidade', 'total']
+        fields = '__all__'
 
 class CarrinhoSerializer(serializers.ModelSerializer):
+    user = ItensSerializer(read_only=True)
     itens = ItensSerializer(many=True, read_only=True)
 
     class Meta:

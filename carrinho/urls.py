@@ -12,6 +12,7 @@ from .import views
 
 router = routers.DefaultRouter()
 router.register(r'produtos', views.ProdutoViewSet)
+router.register(r'itens', views.ItensViewSet)
 router.register(r'carrinhos', views.CarrinhoViewSet)
 
 urlpatterns = [
