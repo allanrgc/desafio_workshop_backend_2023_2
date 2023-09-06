@@ -4,7 +4,7 @@ from django.contrib.auth.models import User, AbstractUser
     
 class Produto(models.Model):
     nome = models.CharField(max_length=255)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor = models.FloatField()
 
     def __str__(self):
         return self.nome
@@ -27,29 +27,23 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-class Carrinho(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    itens = models.ManyToManyField(Produto, through='Itens')
-
-    def __str__(self):
-        return f'Carrinho de {self.usuario.username}'
-
 class Itens(models.Model):
-    carrinho = models.ForeignKey(Carrinho, on_delete=models.CASCADE, related_name='itens_carrinho')
-    # produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
-    choices_produto = [
-        ('produto 1', 'Produto 1'),
-        ('produto 2', 'Produto 2'),
-        ('produto 3', 'Produto 3'),
-    ]
-    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, choices=choices_produto, max_length=12)
-    nome = models.CharField(max_length=255)
-    quantidade = models.PositiveIntegerField()
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, max_length=12)
+    quantidade = models.IntegerField()
 
     def save(self, *args, **kwargs):
-        self.total = self.produto.valor * self.quantidade
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.quantidade}x {self.nome} - Total: R$ {self.total}"
+        return f"{self.quantidade}x {self.produto}"
+
+class Carrinho(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    itens = models.ManyToManyField(Itens)
+    total = models.FloatField(default=0, editable=False)
+
+    def __str__(self):
+        return f'Carrinho de {self.usuario.username}'
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)

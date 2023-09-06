@@ -11,21 +11,41 @@ class ProdutoSerializer(serializers.ModelSerializer):
 
 class ItensSerializer(serializers.ModelSerializer):
     nome = serializers.CharField(source='produto.nome', read_only=True)
-    valor = serializers.DecimalField(source='produto.valor', max_digits=10, decimal_places=2, read_only=True)
-    quantidade = serializers.IntegerField(source='produto.quantidade', read_only=True)
-    total = serializers.FloatField(source='produto.total', read_only=True)
     class Meta:
         model = Itens
-        # fields = ['nome', 'valor', 'quantidade', 'total']
         fields = '__all__'
 
 class CarrinhoSerializer(serializers.ModelSerializer):
-    user = ItensSerializer(read_only=True)
-    itens = ItensSerializer(many=True, read_only=True)
-
+    itens = ItensSerializer(many=True, write_only=True)
     class Meta:
         model = Carrinho
         fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        itens_queryset = Itens.objects.filter(carrinho = instance)
+        representation['itens'] = ItensSerializer(itens_queryset, many=True).data
+        return representation
+    
+    def create(self, validated_data):
+        itens = validated_data.pop('itens', [])
+        print("items => ",itens)
+        print("validated data =>", validated_data)
+        carrinho = Carrinho.objects.create(**validated_data)
+
+        total=0
+        for i in itens:
+            item, created = Itens.objects.get_or_create(**i)
+            carrinho.itens.add(item)
+            produto = Produto.objects.get(id=item.produto_id)
+            total += produto.valor * item.quantidade
+
+        carrinho.total = total
+        carrinho.save()
+        return carrinho
+
+        
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
